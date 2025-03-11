@@ -1,4 +1,4 @@
-module github.com/Bitmato-Studio/HypEditor
+module github.com/Bitmato-Studio/HypTool
 
 go 1.24.0
 
