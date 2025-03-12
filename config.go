@@ -43,6 +43,44 @@ func LoadConfig(path string) *Config {
 	return &conf
 }
 
+func LoadConfigMHA(path string) *[]Config {
+	blob, err := os.ReadFile(path)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var confs []Config
+	if err := json.Unmarshal(blob, &confs); err != nil {
+		panic(err)
+	}
+
+	return &confs
+}
+
+func SaveMHAConfig(path string, configs *[]Config) error {
+	file, err := os.Create(path)
+
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	jsonData, err := json.MarshalIndent(configs, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return err
+	}
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		fmt.Println("Error writing file:", err)
+		return err
+	}
+	return nil
+}
+
 func SaveConfig(path string, config *Config) error {
 	file, err := os.Create(path)
 

@@ -55,18 +55,13 @@ func CloneRepo(path string) {
 	fmt.Println("Repository cloned successfully into", path)
 }
 
-func runCreateApp() {
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
+func generateConfig() *Config {
 	metadata := MetaData{
 		ID:      uuid(),
-		Name:    promptInput("Project Name", "my-app-project"),
+		Name:    promptInput("App Name", "my-app-project"),
 		Version: 1,
 		Author:  promptInput("Author", "Your Name"),
-		URL:     promptInput("Project URL", "https://example.com"),
+		URL:     promptInput("App URL", "https://example.com"),
 		Desc:    promptInput("Description", "A new app project"),
 		Model:   "./assets/model.glb",
 
@@ -75,7 +70,6 @@ func runCreateApp() {
 		Public:  false,
 	}
 
-	// Collect paths
 	config := Config{
 		Data:       metadata,
 		AppVersion: promptInput("Version", "v1.0.0"),
@@ -84,14 +78,65 @@ func runCreateApp() {
 		PropsPath:  "./props/props.json",
 	}
 
-	new_dir := filepath.Join(dir, config.Data.Name)
+	return &config
+}
 
-	config_path := filepath.Join(new_dir, APPROLLUP_FILENAME)
+func createMHASub() {
+	root, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 
-	os.Mkdir(new_dir, 0777)
+	new_config := generateConfig()
+	mha_path := filepath.Join(root, APPROLLUP_MHA_NAME)
+	configs := LoadConfigMHA(mha_path)
+	*configs = append(*configs, *new_config)
 
-	CloneRepo(new_dir)
-	err = SaveConfig(config_path, &config)
+	app_dir := filepath.Join(root, new_config.Data.Name)
+	os.MkdirAll(app_dir, 0777)
+
+	CloneRepo(app_dir)
+
+	err = SaveMHAConfig(mha_path, configs)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func runCreateApp(isMHA bool) {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	root_name := ""
+	rollup_name := APPROLLUP_FILENAME
+
+	if isMHA {
+		root_name = promptInput("Root Name for MHA", "root")
+		rollup_name = APPROLLUP_MHA_NAME
+	}
+
+	config := generateConfig()
+
+	app_dir := filepath.Join(dir, config.Data.Name)
+	config_path := filepath.Join(app_dir, rollup_name)
+	if isMHA {
+		app_dir = filepath.Join(dir, root_name, config.Data.Name)
+		config_path = filepath.Join(dir, root_name, rollup_name)
+	}
+
+	os.MkdirAll(app_dir, 0777)
+
+	CloneRepo(app_dir)
+
+	if !isMHA {
+		err = SaveConfig(config_path, config)
+	} else {
+		var confs []Config
+		confs = append(confs, *config)
+		err = SaveMHAConfig(config_path, &confs)
+	}
 
 	if err != nil {
 		panic(err)

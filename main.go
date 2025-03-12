@@ -10,6 +10,7 @@ import (
 )
 
 const APPROLLUP_FILENAME = "approllup.json"
+const APPROLLUP_MHA_NAME = "approllup.mha.json"
 
 func unpackHyp(filename string) {
 	blob, err := os.ReadFile(filename)
@@ -42,8 +43,10 @@ func unpackHyp(filename string) {
 
 func main() {
 	isInitApp := flag.Bool("init", false, "Create a new app project")
+	isInitMultiApp := flag.Bool("initmha", false, "Create a new app with multiple apps")
 	isBuildApp := flag.Bool("build", false, "Build a App-Rollup")
 	isAddProp := flag.Bool("prop", false, "Run build a prop")
+	isAddApp := flag.Bool("addapp", false, "Add a new app to multi-hyp app")
 
 	scriptBuild := flag.Bool("nsb", false, "Turns off npx rollup -c command")
 	isUnpack := flag.Bool("unpack", false, "Run unpack")
@@ -56,11 +59,42 @@ func main() {
 
 	flag.Parse()
 	if *isInitApp {
-		runCreateApp()
+		runCreateApp(false)
+	}
+
+	if *isInitMultiApp {
+		runCreateApp(true)
+	}
+
+	if *isAddApp {
+		createMHASub()
 	}
 
 	if *isBuildApp {
-		buildAppProject(*defaultUnique, *buildHypJson, *scriptBuild)
+		dir, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			panic(err)
+		}
+
+		isMHA := false
+
+		for _, f := range files {
+			if strings.Contains(f.Name(), "mha") {
+				isMHA = true
+				break
+			}
+		}
+
+		if !isMHA {
+			buildAppProject(*defaultUnique, *buildHypJson, *scriptBuild, nil)
+			return
+		}
+		buildMHAProject(*defaultUnique, *buildHypJson, *scriptBuild)
 	}
 
 	if *isAddProp {

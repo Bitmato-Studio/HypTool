@@ -170,21 +170,50 @@ func buildProps(header *HypeHeader, config *Config) {
 	wg.Wait()
 }
 
-func buildAppProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool) {
+func buildMHAProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool) {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	config_path := filepath.Join(dir, APPROLLUP_MHA_NAME)
+	configs := LoadConfigMHA(config_path)
+
+	var wg sync.WaitGroup
+
+	for _, conf := range *configs {
+		conf := conf // Prevent loop variable capture issue
+		wg.Add(1)    // Increment WaitGroup counter
+		go func(c Config) {
+			defer wg.Done() // Mark as done when function exits
+			buildAppProject(uniqueDefault, buildHypJson, noScriptBuild, &c)
+		}(conf)
+	}
+
+	wg.Wait() // Wait for all goroutines to finish before returning
+}
+
+func buildAppProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool, config *Config) {
 	dir, err := os.Getwd()
 
 	if err != nil {
 		panic(err)
 	}
 
-	rollup_config := filepath.Join(dir, APPROLLUP_FILENAME)
-
-	config := LoadConfig(rollup_config)
-
+	if config == nil {
+		rollup_config := filepath.Join(dir, APPROLLUP_FILENAME)
+		config = LoadConfig(rollup_config)
+	} else {
+		dir = filepath.Join(dir, config.Data.Name)
+		config.Data.Model = filepath.Join(dir, config.Data.Model)
+		config.ScriptPath = filepath.Join(dir, config.ScriptPath)
+		config.AssetsPath = filepath.Join(dir, config.AssetsPath)
+		config.PropsPath = filepath.Join(dir, config.PropsPath)
+	}
 	// props_path := filepath.Join(dir, config.PropsPath)
 	// props := loadProps(props_path)
 
-	fmt.Printf("Building app %s by %s (v%d)\n", config.Data.Name, config.Data.Author, config.Data.Version)
+	fmt.Printf("Building app %s by %s (v%s)\n", config.Data.Name, config.Data.Author, config.AppVersion)
 
 	var newHeader HypeHeader
 
@@ -217,6 +246,7 @@ func buildAppProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool) 
 	/* Build the scripts */
 	if !noScriptBuild {
 		cmd := exec.Command("npx", "rollup", "-c")
+		cmd.Dir = dir
 		cmd.Stdout = os.Stdout // Pipe output to terminal
 		cmd.Stderr = os.Stderr // Pipe errors to terminal
 
