@@ -43,8 +43,10 @@ type ImageData struct {
 }
 
 type AppMetaData struct {
-	RequiredMods []string          `json:"required_mods,omitempty"`
-	SourceMap    map[string]string `json:"source_map,omitempty"`
+	HyperfyVersion string            `json:"hyperfy_version,omitempty"`
+	AppVersion     string            `json:"app_version,omitempty"`
+	RequiredMods   []string          `json:"required_mods,omitempty"`
+	SourceMap      map[string]string `json:"source_map,omitempty"`
 }
 
 // PropsMap allows both string values and nested objects.

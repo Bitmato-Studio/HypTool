@@ -62,8 +62,9 @@ func runCreateApp() {
 	}
 
 	metadata := MetaData{
+		ID:      uuid(),
 		Name:    promptInput("Project Name", "my-app-project"),
-		Version: promptInput("Version", 1),
+		Version: 1,
 		Author:  promptInput("Author", "Your Name"),
 		URL:     promptInput("Project URL", "https://example.com"),
 		Desc:    promptInput("Description", "A new app project"),
@@ -77,6 +78,7 @@ func runCreateApp() {
 	// Collect paths
 	config := Config{
 		Data:       metadata,
+		AppVersion: promptInput("Version", "v1.0.0"),
 		ScriptPath: "./dist/main.bundle.js",
 		AssetsPath: "./assets",
 		PropsPath:  "./props/props.json",

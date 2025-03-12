@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type Prop map[string]any
@@ -138,22 +139,35 @@ func buildProps(header *HypeHeader, config *Config) {
 		panic(err)
 	}
 
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+
 	for _, prop := range data {
-		if !validateProp(prop) {
-			panic(fmt.Errorf("Prop does not meet standard see docs"))
-		}
-		fmt.Printf("Building %s prop of type %s\n", prop["key"], prop["type"])
+		prop := prop
+		wg.Add(1)
 
-		if prop["type"] == "file" {
-			buildPropFile(header, prop)
-			continue
-		}
+		go func(prop map[string]any) {
+			defer wg.Done()
 
-		if _, initialExists := prop["initial"]; initialExists {
-			header.Blueprint.Props[prop["key"].(string)] = prop["initial"]
-		}
+			if !validateProp(prop) {
+				panic(fmt.Errorf("Prop does not meet standard see docs"))
+			}
+			fmt.Printf("Building %s prop of type %s\n", prop["key"], prop["type"])
+
+			if prop["type"] == "file" {
+				buildPropFile(header, prop)
+				return
+			}
+
+			if initial, initialExists := prop["initial"]; initialExists {
+				mutex.Lock()
+				header.Blueprint.Props[prop["key"].(string)] = initial
+				mutex.Unlock()
+			}
+		}(prop)
 	}
 
+	wg.Wait()
 }
 
 func buildAppProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool) {
@@ -174,8 +188,13 @@ func buildAppProject(uniqueDefault bool, buildHypJson bool, noScriptBuild bool) 
 
 	var newHeader HypeHeader
 
+	id := config.Data.ID
+	if id == "" {
+		id = uuid()
+	}
+
 	newHeader.Blueprint = &Blueprint{
-		ID:      uuid(),
+		ID:      id,
 		Name:    config.Data.Name,
 		Author:  config.Data.Author,
 		Version: config.Data.Version,

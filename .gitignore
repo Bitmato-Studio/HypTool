@@ -2,4 +2,7 @@ example*
 *.hyp
 
 hyp_tool*
+hyptool*
+
+builds
 */*

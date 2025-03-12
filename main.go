@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -51,25 +52,29 @@ func main() {
 	buildHypJson := flag.Bool("bjson", false, "Build App json for debugging")
 	defaultUnique := flag.Bool("dunique", true, "Disable unique by default")
 
+	isSetVersion := flag.Bool("setversion", false, "Run to change the version of your app")
+
 	flag.Parse()
 	if *isInitApp {
 		runCreateApp()
-		return
 	}
 
 	if *isBuildApp {
 		buildAppProject(*defaultUnique, *buildHypJson, *scriptBuild)
-		return
 	}
 
 	if *isAddProp {
-		return
+	}
+
+	if *isSetVersion {
+		args := flag.Args()
+		if len(args) < 1 {
+			log.Fatal("Error: you must specify a version as a positional argument.")
+		}
 	}
 
 	if *isUnpack {
 		unpackHyp(*filepath)
-
-		return
 	}
 
 }

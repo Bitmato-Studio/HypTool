@@ -7,8 +7,9 @@ import (
 )
 
 type MetaData struct {
+	ID      string `json:"id"`
 	Name    string `json:"name"`
-	Version int    `json:"version"`
+	Version int    `json:"version"` // this is here because hyperfy requires it
 	Author  string `json:"author"`
 	URL     string `json:"url"`
 	Desc    string `json:"desc"`
@@ -21,6 +22,7 @@ type MetaData struct {
 
 type Config struct {
 	Data       MetaData `json:"data"`
+	AppVersion string   `json:"app_version"`
 	ScriptPath string   `json:"script_path"`
 	AssetsPath string   `json:"assets_path"`
 	PropsPath  string   `json:"props_path"`
