@@ -52,6 +52,12 @@ type AppMetaData struct {
 // PropsMap allows both string values and nested objects.
 type PropsMap map[string]any
 
+type PropAsset struct {
+	Type string
+	URL  string
+	Name string
+}
+
 // Asset holds metadata plus the actual in-memory file data.
 type Asset struct {
 	Type     string        `json:"type"`
